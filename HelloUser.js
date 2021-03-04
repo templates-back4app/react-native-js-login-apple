@@ -7,15 +7,8 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import {Alert, Image, Text, TouchableOpacity, View} from 'react-native';
 import Parse from 'parse/react-native';
 import {GoogleSignin} from '@react-native-community/google-signin';
-import {
-  AccessToken,
-  GraphRequest,
-  GraphRequestManager,
-  LoginManager,
-} from 'react-native-fbsdk';
 import {
   appleAuth,
   appleAuthAndroid,
@@ -81,87 +74,6 @@ export const HelloUser = () => {
           Alert.alert('Error!', error.message);
           return false;
         });
-    } catch (error) {
-      Alert.alert('Error!', error.code);
-      return false;
-    }
-  };
-
-  const doUserLinkFacebook = async function () {
-    try {
-      // Login using the Facebook login dialog asking form email permission
-      return await LoginManager.logInWithPermissions(['email']).then(
-        (loginResult) => {
-          if (loginResult.isCancelled) {
-            console.log('Login cancelled');
-            return false;
-          } else {
-            // Retrieve access token from FBSDK to be able to linkWith Parse
-            AccessToken.getCurrentAccessToken().then((data) => {
-              const facebookAccessToken = data.accessToken;
-              // Callback that will be called after FBSDK successfuly retrieves user email and id from FB
-              const responseEmailCallback = async (error, emailResult) => {
-                if (error) {
-                  console.log('Error fetching data: ' + error.toString());
-                } else {
-                  // Format authData to provide correctly for Facebook linkWith on Parse
-                  const facebookId = emailResult.id;
-                  const authData = {
-                    id: facebookId,
-                    access_token: facebookAccessToken,
-                  };
-                  let currentUser = await Parse.User.currentAsync();
-                  return await currentUser
-                    .linkWith('facebook', {
-                      authData: authData,
-                    })
-                    .then(async (loggedInUser) => {
-                      // logIn returns the corresponding ParseUser object
-                      Alert.alert(
-                        'Success!',
-                        `User ${loggedInUser.get(
-                          'username',
-                        )} has successfully linked his Facebook account!`,
-                      );
-                      // To verify that this is in fact the current user, currentAsync can be used
-                      currentUser = await Parse.User.currentAsync();
-                      console.log(loggedInUser === currentUser);
-                      return true;
-                    })
-                    .catch(async (linkWithError) => {
-                      // Error can be caused by wrong parameters or lack of Internet connection
-                      Alert.alert('Error!', linkWithError.message);
-                      return false;
-                    });
-                }
-              };
-
-              // Formats a FBSDK GraphRequest to retrieve user email and id
-              const emailRequest = new GraphRequest(
-                '/me',
-                {
-                  accessToken: facebookAccessToken,
-                  parameters: {
-                    fields: {
-                      string: 'email',
-                    },
-                  },
-                },
-                responseEmailCallback,
-              );
-
-              // Start the graph request, which will call the callback after finished
-              new GraphRequestManager().addRequest(emailRequest).start();
-
-              return true;
-            });
-          }
-        },
-        (error) => {
-          console.log('Login fail with error: ' + error);
-          return false;
-        },
-      );
     } catch (error) {
       Alert.alert('Error!', error.code);
       return false;
@@ -251,7 +163,7 @@ export const HelloUser = () => {
           <View style={Styles.login_social_separator_line} />
         </View>
         <View style={Styles.login_social_buttons}>
-          <TouchableOpacity onPress={() => doUserLinkFacebook()}>
+          <TouchableOpacity>
             <View
               style={[
                 Styles.login_social_button,
